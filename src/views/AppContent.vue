@@ -17,8 +17,8 @@ import {
   useDialog,
 } from 'naive-ui';
 import type { Todo, TodoStatus } from '../types/todo';
-import { useTodoStore } from '../stores/todo';
-import { useBrokerStore } from '../stores/broker';
+import { useTodoStore } from '../store/todo';
+import { useBrokerStore } from '../store/broker';
 import { logger } from '../utils/logger';
 
 logger.info('AppContent starting...', { context: 'AppContent' });
@@ -278,7 +278,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div>
+  <div class="app-content-wrapper">
     <!-- 内容 -->
     <div class="p-6">
       <n-space vertical :size="20">
@@ -433,6 +433,11 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.app-content-wrapper {
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
 /* 隐藏滚动条但保持滚动功能 */
 :deep(*) {
   scrollbar-width: none; /* Firefox */

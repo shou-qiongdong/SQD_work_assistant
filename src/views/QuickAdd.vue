@@ -6,7 +6,7 @@ import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
 import { emit } from '@tauri-apps/api/event';
 import type { TodoStatus } from '../types/todo';
 import { logger } from '../utils/logger';
-import { useBrokerStore } from '../stores/broker';
+import { useBrokerStore } from '../store/broker';
 
 
 const message = useMessage();
@@ -201,32 +201,5 @@ const handleKeydown = (e: KeyboardEvent) => {
   flex: 1;
   min-width: 0;
   -webkit-app-region: no-drag;
-}
-</style>
-
-<style>
-/* 全局样式：隐藏滚动条 */
-html, body {
-  overflow: hidden !important;
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  background-color: #18181b;
-}
-
-#app {
-  overflow: hidden !important;
-  background-color: #18181b;
-}
-
-/* 隐藏滚动条 */
-::-webkit-scrollbar {
-  display: none;
-}
-
-* {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
 }
 </style>

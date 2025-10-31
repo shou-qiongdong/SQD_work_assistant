@@ -8,12 +8,63 @@ mod validation;
 
 use db::{establish_connection, AppState};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{TrayIconBuilder};
 use tauri_plugin_global_shortcut::GlobalShortcutExt;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
+
+// 窗口尺寸常量
+const QUICK_ADD_WIDTH: f64 = 480.0;
+const QUICK_ADD_HEIGHT: f64 = 60.0;
+const STATS_WIDTH: f64 = 900.0;
+const STATS_HEIGHT: f64 = 700.0;
+
+// 辅助函数：创建或显示快速添加窗口
+fn create_or_show_quick_add_window(app: &AppHandle) {
+    if let Some(window) = app.get_webview_window("quick-add") {
+        tracing::debug!("Quick-add window already exists, showing it");
+        let _ = window.show();
+        let _ = window.set_focus();
+    } else {
+        tracing::debug!("Creating new quick-add window");
+        match WebviewWindowBuilder::new(
+            app,
+            "quick-add",
+            WebviewUrl::App("quick-add.html".into())
+        )
+        .title("")
+        .inner_size(QUICK_ADD_WIDTH, QUICK_ADD_HEIGHT)
+        .resizable(false)
+        .always_on_top(true)
+        .center()
+        .decorations(false)
+        .build() {
+            Ok(_) => tracing::info!("Quick-add window created successfully"),
+            Err(e) => tracing::error!("Failed to create quick-add window: {}", e),
+        }
+    }
+}
+
+// 辅助函数：创建或显示统计窗口
+fn create_or_show_stats_window(app: &AppHandle) {
+    if let Some(window) = app.get_webview_window("stats") {
+        let _ = window.show();
+        let _ = window.set_focus();
+    } else {
+        let _ = WebviewWindowBuilder::new(
+            app,
+            "stats",
+            WebviewUrl::App("stats.html".into())
+        )
+        .title("数据统计")
+        .inner_size(STATS_WIDTH, STATS_HEIGHT)
+        .resizable(true)
+        .center()
+        .build();
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -72,32 +123,7 @@ pub fn run() {
             let app_handle = app.handle().clone();
             app.global_shortcut().on_shortcut("CommandOrControl+Shift+N", move |_app, _event, _shortcut| {
                 tracing::info!("Global shortcut triggered: CommandOrControl+Shift+N");
-
-                // 检查快速添加窗口是否已存在
-                if let Some(window) = app_handle.get_webview_window("quick-add") {
-                    // 如果窗口已存在，显示并聚焦
-                    tracing::debug!("Quick-add window already exists, showing it");
-                    let _ = window.show();
-                    let _ = window.set_focus();
-                } else {
-                    // 创建新的快速添加窗口
-                    tracing::debug!("Creating new quick-add window");
-                    match WebviewWindowBuilder::new(
-                        &app_handle,
-                        "quick-add",
-                        WebviewUrl::App("quick-add.html".into())
-                    )
-                    .title("")
-                    .inner_size(480.0, 60.0)
-                    .resizable(false)
-                    .always_on_top(true)
-                    .center()
-                    .decorations(false)
-                    .build() {
-                        Ok(_) => tracing::info!("Quick-add window created successfully"),
-                        Err(e) => tracing::error!("Failed to create quick-add window: {}", e),
-                    }
-                }
+                create_or_show_quick_add_window(&app_handle);
             }).expect("Failed to register global shortcut");
 
             // 创建托盘菜单
@@ -132,41 +158,11 @@ pub fn run() {
                         }
                         "stats" => {
                             tracing::info!("Tray menu: Stats view");
-                            if let Some(window) = app.get_webview_window("stats") {
-                                let _ = window.show();
-                                let _ = window.set_focus();
-                            } else {
-                                let _ = WebviewWindowBuilder::new(
-                                    app,
-                                    "stats",
-                                    WebviewUrl::App("stats.html".into())
-                                )
-                                .title("数据统计")
-                                .inner_size(900.0, 700.0)
-                                .resizable(true)
-                                .center()
-                                .build();
-                            }
+                            create_or_show_stats_window(app);
                         }
                         "quick_add" => {
                             tracing::info!("Tray menu: Quick add");
-                            if let Some(window) = app.get_webview_window("quick-add") {
-                                let _ = window.show();
-                                let _ = window.set_focus();
-                            } else {
-                                let _ = WebviewWindowBuilder::new(
-                                    app,
-                                    "quick-add",
-                                    WebviewUrl::App("quick-add.html".into())
-                                )
-                                .title("")
-                                .inner_size(480.0, 60.0)
-                                .resizable(false)
-                                .always_on_top(true)
-                                .center()
-                                .decorations(false)
-                                .build();
-                            }
+                            create_or_show_quick_add_window(app);
                         }
                         "quit" => {
                             tracing::info!("Tray menu: Quit");
@@ -189,7 +185,6 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::create_todo,
             commands::get_todos,
-            commands::get_todo,
             commands::update_todo,
             commands::delete_todo,
             commands::search_todos,

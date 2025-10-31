@@ -16,6 +16,7 @@ export default defineConfig(async () => ({
       input: {
         main: resolve(__dirname, 'index.html'),
         quickAdd: resolve(__dirname, 'quick-add.html'),
+        stats: resolve(__dirname, 'stats.html'),
       },
     },
   },

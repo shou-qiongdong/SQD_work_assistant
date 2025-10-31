@@ -3,6 +3,7 @@ import { createPinia } from "pinia";
 import App from "./App.vue";
 import "virtual:uno.css";
 import "@unocss/reset/tailwind.css";
+import "./styles/global.css";
 
 const app = createApp(App);
 const pinia = createPinia();

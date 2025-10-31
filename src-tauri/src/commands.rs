@@ -10,12 +10,6 @@ use tauri::State;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct GetTodoInput {
-    todo_id: i32,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct UpdateTodoInput {
     todo_id: i32,
     title: Option<String>,
@@ -44,7 +38,6 @@ pub fn create_todo(
     // 验证输入
     let input = TodoInput {
         title: title.clone(),
-        description: None,
         broker: broker.clone(),
     };
     input.validate_and_sanitize()?;
@@ -83,22 +76,6 @@ pub fn get_todos(state: State<AppState>) -> AppResult<Vec<Todo>> {
     let todos = todos::table.load::<Todo>(&mut conn)?;
     tracing::info!("get_todos returned {} todos", todos.len());
     Ok(todos)
-}
-
-#[tauri::command]
-pub fn get_todo(
-    state: State<AppState>,
-    input: GetTodoInput,
-) -> AppResult<Todo> {
-    tracing::info!("get_todo called - todo_id: {}", input.todo_id);
-    let mut conn = get_connection(&state.pool)?;
-
-    let todo = todos::table
-        .find(input.todo_id)
-        .first::<Todo>(&mut conn)?;
-
-    tracing::info!("get_todo returned todo with id: {}", todo.id);
-    Ok(todo)
 }
 
 #[tauri::command]

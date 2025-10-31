@@ -36,15 +36,6 @@ export const useBrokerStore = defineStore('broker', {
       }
     },
 
-    addBroker(broker: string) {
-      const trimmed = broker.trim();
-      if (trimmed && !this.brokers.includes(trimmed)) {
-        this.brokers.push(trimmed);
-        this.brokers.sort();
-        logger.info('Broker added to pool', { context: 'BrokerStore', data: { broker: trimmed } });
-      }
-    },
-
     setLastUsedBroker(broker: string) {
       this.lastUsedBroker = broker;
       localStorage.setItem('lastUsedBroker', broker);

@@ -1,0 +1,52 @@
+/**
+ * 全局变量定义
+ */
+
+:root {
+  /* 颜色变量 */
+  --color-primary: #2080f0;
+  --color-success: #18a058;
+  --color-warning: #f0a020;
+  --color-error: #d03050;
+  --color-info: #70c0e8;
+
+  /* 状态颜色 */
+  --color-pending: #909399;
+  --color-in-progress: #2080f0;
+  --color-completed: #18a058;
+
+  /* 背景颜色 */
+  --bg-main: rgb(16, 16, 20);
+  --bg-card: rgba(255, 255, 255, 0.05);
+  --bg-hover: rgba(255, 255, 255, 0.08);
+
+  /* 边框颜色 */
+  --border-color: rgba(255, 255, 255, 0.1);
+
+  /* 文字颜色 */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-disabled: rgba(255, 255, 255, 0.3);
+
+  /* 间距 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+
+  /* 圆角 */
+  --border-radius-sm: 4px;
+  --border-radius-md: 6px;
+  --border-radius-lg: 8px;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+
+  /* 过渡 */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+}

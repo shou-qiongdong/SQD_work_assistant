@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { NMessageProvider, NDialogProvider, NConfigProvider, darkTheme } from 'naive-ui';
-import AppContent from './components/AppContent.vue';
+import AppContent from './views/AppContent.vue';
 
 console.log('[App] Starting...');
 
