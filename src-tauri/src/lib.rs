@@ -1,74 +1,25 @@
-mod commands;
+// 模块声明
+mod config;
 mod db;
-mod models;
-mod schema;
-mod logger;
-mod error;
-mod validation;
+mod dto;
+mod handlers;
+mod services;
+mod utils;
+mod window;
 
-use db::{establish_connection, AppState};
+use config::AppState;
+use db::establish_connection;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::Manager;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
-use tauri::tray::{TrayIconBuilder};
+use tauri::tray::TrayIconBuilder;
 use tauri_plugin_global_shortcut::GlobalShortcutExt;
+use window::{create_or_show_quick_add_window, create_or_show_stats_window};
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
-// 窗口尺寸常量
-const QUICK_ADD_WIDTH: f64 = 480.0;
-const QUICK_ADD_HEIGHT: f64 = 60.0;
-const STATS_WIDTH: f64 = 900.0;
-const STATS_HEIGHT: f64 = 700.0;
-
-// 辅助函数：创建或显示快速添加窗口
-fn create_or_show_quick_add_window(app: &AppHandle) {
-    if let Some(window) = app.get_webview_window("quick-add") {
-        tracing::debug!("Quick-add window already exists, showing it");
-        let _ = window.show();
-        let _ = window.set_focus();
-    } else {
-        tracing::debug!("Creating new quick-add window");
-        match WebviewWindowBuilder::new(
-            app,
-            "quick-add",
-            WebviewUrl::App("quick-add.html".into())
-        )
-        .title("")
-        .inner_size(QUICK_ADD_WIDTH, QUICK_ADD_HEIGHT)
-        .resizable(false)
-        .always_on_top(true)
-        .center()
-        .decorations(false)
-        .build() {
-            Ok(_) => tracing::info!("Quick-add window created successfully"),
-            Err(e) => tracing::error!("Failed to create quick-add window: {}", e),
-        }
-    }
-}
-
-// 辅助函数：创建或显示统计窗口
-fn create_or_show_stats_window(app: &AppHandle) {
-    if let Some(window) = app.get_webview_window("stats") {
-        let _ = window.show();
-        let _ = window.set_focus();
-    } else {
-        let _ = WebviewWindowBuilder::new(
-            app,
-            "stats",
-            WebviewUrl::App("stats.html".into())
-        )
-        .title("数据统计")
-        .inner_size(STATS_WIDTH, STATS_HEIGHT)
-        .resizable(true)
-        .center()
-        .build();
-    }
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
@@ -89,7 +40,7 @@ pub fn run() {
             std::fs::create_dir_all(&app_dir).expect("Failed to create app data dir");
 
             // 初始化日志系统
-            logger::init_logger(&app_dir);
+            utils::init_logger(&app_dir);
             tracing::info!("Application starting...");
             tracing::info!("App data directory: {:?}", app_dir);
 
@@ -113,10 +64,7 @@ pub fn run() {
                 }
             }
 
-            let app_state = AppState {
-                pool,
-            };
-
+            let app_state = AppState { pool };
             app.manage(app_state);
 
             // 注册全局快捷键
@@ -183,13 +131,13 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            commands::create_todo,
-            commands::get_todos,
-            commands::update_todo,
-            commands::delete_todo,
-            commands::search_todos,
-            commands::get_broker_pool,
-            logger::log_from_frontend,
+            handlers::create_todo,
+            handlers::get_todos,
+            handlers::update_todo,
+            handlers::delete_todo,
+            handlers::search_todos,
+            handlers::get_broker_pool,
+            utils::logger::log_from_frontend,
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")

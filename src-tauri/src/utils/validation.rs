@@ -1,4 +1,4 @@
-use crate::error::{AppError, AppResult};
+use super::error::{AppError, AppResult};
 use validator::Validate;
 
 #[derive(Debug, Validate)]

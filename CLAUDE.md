@@ -96,30 +96,97 @@ CREATE TABLE todos (
 - [ ] 任务统计面板
 
 ## 项目结构
+
+### 前端结构（遵循 Vue3 最佳实践）
 ```
-.
-├── src/                      # Vue 前端代码
-│   ├── App.vue              # NMessageProvider 包装器
-│   ├── components/
-│   │   └── AppContent.vue   # 主应用逻辑和 UI
-│   ├── stores/
-│   │   └── todo.ts          # Pinia 状态管理
-│   ├── types/
-│   │   └── todo.ts          # TypeScript 类型定义
-│   └── main.ts              # 入口文件
-├── src-tauri/               # Tauri Rust 后端
-│   ├── src/
-│   │   ├── lib.rs           # 主入口，数据库设置
-│   │   ├── commands.rs      # Tauri 命令（CRUD API）
-│   │   ├── models.rs        # Diesel 模型
-│   │   ├── schema.rs        # 数据库 schema
-│   │   └── db.rs            # 数据库连接池
-│   ├── Cargo.toml           # Rust 依赖
-│   └── tauri.conf.json      # Tauri 配置
-├── uno.config.ts            # UnoCSS 配置
-├── vite.config.ts           # Vite 配置
-└── package.json             # 前端依赖
+src/
+├── api/                     # API 调用层
+│   └── index.ts            # 封装所有 Tauri 命令
+├── assets/                  # 静态资源
+├── components/              # 可复用组件
+│   ├── TimeRangeSelector.vue
+│   ├── StatsSummaryCards.vue
+│   ├── TimeTrendChart.vue
+│   ├── StatusChart.vue
+│   ├── BrokerChart.vue
+│   ├── BrokerDetailPanel.vue
+│   └── ReportSection.vue
+├── composables/             # 组合式函数
+│   ├── useStatsData.ts     # 统计数据计算逻辑
+│   └── useReportExport.ts  # 报告导出逻辑
+├── store/                   # Pinia 状态管理
+│   ├── todo.ts             # Todo 状态
+│   └── broker.ts           # Broker 状态
+├── styles/                  # 全局样式
+│   ├── variables.css       # CSS 变量（主题色、间距等）
+│   └── global.css          # 全局样式和工具类
+├── types/                   # TypeScript 类型定义
+│   └── todo.ts
+├── utils/                   # 工具函数
+│   └── logger.ts           # 日志工具
+├── views/                   # 页面组件
+│   ├── AppContent.vue      # 主页面
+│   ├── StatsView.vue       # 统计页面
+│   └── QuickAdd.vue        # 快速添加页面
+├── App.vue                  # 根组件（NMessageProvider 包装器）
+├── main.ts                 # 主入口
+├── stats.ts                # 统计页面入口
+└── quick-add.ts            # 快速添加页面入口
 ```
+
+### 后端结构（遵循分层架构）
+```
+src-tauri/src/
+├── config/                  # 配置模块
+│   ├── mod.rs
+│   ├── app_state.rs        # 应用全局状态
+│   └── constants.rs        # 常量定义（窗口尺寸等）
+├── db/                      # 数据库层
+│   ├── mod.rs
+│   ├── connection.rs       # 数据库连接池管理
+│   ├── models.rs           # Diesel ORM 模型
+│   └── schema.rs           # 数据库 schema（Diesel 自动生成）
+├── dto/                     # 数据传输对象
+│   ├── mod.rs
+│   └── todo_dto.rs         # Todo 相关 DTO
+├── handlers/                # Tauri 命令处理器（API 层）
+│   ├── mod.rs
+│   ├── todo_handler.rs     # Todo 命令处理
+│   └── broker_handler.rs   # Broker 命令处理
+├── services/                # 业务逻辑层
+│   ├── mod.rs
+│   ├── todo_service.rs     # Todo 业务逻辑
+│   └── broker_service.rs   # Broker 业务逻辑
+├── utils/                   # 工具模块
+│   ├── mod.rs
+│   ├── error.rs            # 错误处理
+│   ├── logger.rs           # 日志配置
+│   └── validation.rs       # 输入验证
+├── window/                  # 窗口管理
+│   ├── mod.rs
+│   └── manager.rs          # 窗口创建和管理
+├── lib.rs                  # 库入口，应用设置
+└── main.rs                 # 程序入口
+```
+
+### 架构说明
+
+**前端分层**：
+- **api/**: 封装所有后端调用，统一管理 Tauri 命令
+- **components/**: 小而专注的可复用组件
+- **composables/**: 提取可复用的响应式逻辑
+- **store/**: 集中式状态管理
+- **views/**: 页面级组件
+- **styles/**: 全局样式和 CSS 变量
+
+**后端分层**：
+- **handlers/**: 处理 Tauri 命令，负责参数解析和响应格式化
+- **services/**: 核心业务逻辑，与具体框架解耦
+- **db/**: 数据访问层，封装数据库操作
+- **dto/**: 定义前后端交互的数据结构
+- **config/**: 应用配置和常量
+- **utils/**: 通用工具函数
+- **window/**: 窗口管理逻辑
 
 ## 开发命令
 - `pnpm tauri dev` - 开发模式
