@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia';
-import { invoke } from '@tauri-apps/api/core';
-import type { Todo, CreateTodoInput, UpdateTodoInput, TodoStatus } from '../types/todo';
+import type { Todo, CreateTodoInput, UpdateTodoInput } from '../types/todo';
 import { logger } from '../utils/logger';
+import { todoApi } from '../api/todo';
+import { ErrorHandler } from '../utils/error-handler';
 
 interface TodoState {
   todos: Todo[];
@@ -28,11 +29,10 @@ export const useTodoStore = defineStore('todo', {
       this.loading = true;
       this.error = null;
       try {
-        this.todos = await invoke<Todo[]>('get_todos');
+        this.todos = await todoApi.getAll();
         logger.info(`Todos fetched successfully`, { context: 'TodoStore', data: { count: this.todos.length } });
       } catch (error) {
-        this.error = String(error);
-        logger.error('Failed to fetch todos', { context: 'TodoStore', data: error });
+        this.error = ErrorHandler.handle(error, 'TodoStore', '获取任务列表失败');
       } finally {
         this.loading = false;
       }
@@ -43,18 +43,12 @@ export const useTodoStore = defineStore('todo', {
       this.loading = true;
       this.error = null;
       try {
-        const payload = {
-          title: input.title.trim(),
-          status: input.status,
-          broker: input.broker.trim(),
-        };
-        const todo = await invoke<Todo>('create_todo', payload);
+        const todo = await todoApi.create(input);
         this.todos.push(todo);
         logger.info('Todo created successfully', { context: 'TodoStore', data: { id: todo.id } });
         return todo;
       } catch (error) {
-        this.error = String(error);
-        logger.error('Failed to create todo', { context: 'TodoStore', data: error });
+        this.error = ErrorHandler.handle(error, 'TodoStore', '创建任务失败');
         throw error;
       } finally {
         this.loading = false;
@@ -66,35 +60,13 @@ export const useTodoStore = defineStore('todo', {
       this.loading = true;
       this.error = null;
       try {
-        const commandInput: {
-          todoId: number;
-          title?: string;
-          status?: TodoStatus;
-          broker?: string;
-        } = { todoId: id };
-
-        if (input.title !== undefined) {
-          commandInput.title = input.title.trim();
-        }
-        if (input.status !== undefined) {
-          commandInput.status = input.status;
-        }
-        if (input.broker !== undefined) {
-          commandInput.broker = input.broker;
-        }
-
-        const updatedTodo = await invoke<Todo>('update_todo', {
-          input: commandInput,
-        });
-        const index = this.todos.findIndex((t) => t.id === id);
-        if (index !== -1) {
-          this.todos[index] = updatedTodo;
-        }
+        const updatedTodo = await todoApi.update(id, input);
+        // 使用 map 优化数组更新
+        this.todos = this.todos.map(t => t.id === id ? updatedTodo : t);
         logger.info(`Todo ${id} updated successfully`, { context: 'TodoStore' });
         return updatedTodo;
       } catch (error) {
-        this.error = String(error);
-        logger.error(`Failed to update todo ${id}`, { context: 'TodoStore', data: error });
+        this.error = ErrorHandler.handle(error, 'TodoStore', '更新任务失败');
         throw error;
       } finally {
         this.loading = false;
@@ -106,16 +78,11 @@ export const useTodoStore = defineStore('todo', {
       this.loading = true;
       this.error = null;
       try {
-        await invoke('delete_todo', {
-          input: {
-            todoId: id
-          }
-        });
+        await todoApi.delete(id);
         this.todos = this.todos.filter((t) => t.id !== id);
         logger.info(`Todo ${id} deleted successfully`, { context: 'TodoStore' });
       } catch (error) {
-        this.error = String(error);
-        logger.error(`Failed to delete todo ${id}`, { context: 'TodoStore', data: error });
+        this.error = ErrorHandler.handle(error, 'TodoStore', '删除任务失败');
         throw error;
       } finally {
         this.loading = false;
@@ -127,11 +94,10 @@ export const useTodoStore = defineStore('todo', {
       this.loading = true;
       this.error = null;
       try {
-        this.todos = await invoke<Todo[]>('search_todos', { query });
+        this.todos = await todoApi.search(query);
         logger.info(`Search completed`, { context: 'TodoStore', data: { count: this.todos.length } });
       } catch (error) {
-        this.error = String(error);
-        logger.error('Failed to search todos', { context: 'TodoStore', data: error });
+        this.error = ErrorHandler.handle(error, 'TodoStore', '搜索任务失败');
       } finally {
         this.loading = false;
       }

@@ -10,7 +10,7 @@ pub struct TodoService;
 impl TodoService {
     /// 创建新的 Todo
     pub fn create(pool: &DbPool, input: CreateTodoInput) -> AppResult<Todo> {
-        tracing::info!(
+        tracing::debug!(
             "TodoService::create - title: {}, status: {}, broker: {}",
             input.title, input.status, input.broker
         );
@@ -31,36 +31,37 @@ impl TodoService {
             broker: input.broker.trim().to_string(),
             created_at: now.clone(),
             updated_at: now,
+            conclusion: input.conclusion.map(|s| s.trim().to_string()).filter(|s| !s.is_empty()),
         };
 
         diesel::insert_into(todos::table)
             .values(&new_todo)
             .execute(&mut conn)?;
 
-        tracing::info!("Todo inserted successfully");
+        tracing::debug!("Todo inserted successfully");
 
         let todo = todos::table
             .order(todos::id.desc())
             .first::<Todo>(&mut conn)?;
 
-        tracing::info!("Created todo with id: {}", todo.id);
+        tracing::info!("Created todo: id={}, title={}", todo.id, todo.title);
         Ok(todo)
     }
 
     /// 获取所有 Todos
     pub fn get_all(pool: &DbPool) -> AppResult<Vec<Todo>> {
-        tracing::info!("TodoService::get_all");
+        tracing::debug!("TodoService::get_all");
         let mut conn = get_connection(pool)?;
 
         let todos_list = todos::table.load::<Todo>(&mut conn)?;
-        tracing::info!("Retrieved {} todos", todos_list.len());
+        tracing::debug!("Retrieved {} todos", todos_list.len());
         Ok(todos_list)
     }
 
     /// 更新 Todo
     pub fn update(pool: &DbPool, input: UpdateTodoInput) -> AppResult<Todo> {
-        tracing::info!("TodoService::update - todo_id: {}", input.todo_id);
-        tracing::debug!(
+        tracing::debug!("TodoService::update - todo_id: {}", input.todo_id);
+        tracing::trace!(
             "Update details - title: {:?}, status: {:?}, broker: {:?}",
             input.title, input.status, input.broker
         );
@@ -78,6 +79,12 @@ impl TodoService {
             }
         }
 
+        if let Some(ref conclusion) = input.conclusion {
+            if !conclusion.trim().is_empty() && conclusion.len() > 2000 {
+                return Err(AppError::Validation("结论长度不能超过 2000 字符".to_string()));
+            }
+        }
+
         let mut conn = get_connection(pool)?;
         let now = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
 
@@ -86,37 +93,38 @@ impl TodoService {
             status: input.status,
             broker: input.broker.map(|b| b.trim().to_string()),
             updated_at: now,
+            conclusion: input.conclusion.map(|s| s.trim().to_string()).filter(|s| !s.is_empty()),
         };
 
         diesel::update(todos::table.find(input.todo_id))
             .set(&update_todo)
             .execute(&mut conn)?;
 
-        tracing::info!("Todo {} updated successfully", input.todo_id);
+        tracing::debug!("Todo {} updated successfully", input.todo_id);
 
         let todo = todos::table
             .find(input.todo_id)
             .first::<Todo>(&mut conn)?;
 
-        tracing::info!("Retrieved updated todo with id: {}", todo.id);
+        tracing::info!("Updated todo: id={}", todo.id);
         Ok(todo)
     }
 
     /// 删除 Todo
     pub fn delete(pool: &DbPool, input: DeleteTodoInput) -> AppResult<()> {
-        tracing::info!("TodoService::delete - todo_id: {}", input.todo_id);
+        tracing::debug!("TodoService::delete - todo_id: {}", input.todo_id);
         let mut conn = get_connection(pool)?;
 
         diesel::delete(todos::table.find(input.todo_id))
             .execute(&mut conn)?;
 
-        tracing::info!("Todo {} deleted successfully", input.todo_id);
+        tracing::info!("Deleted todo: id={}", input.todo_id);
         Ok(())
     }
 
     /// 搜索 Todos
     pub fn search(pool: &DbPool, input: SearchTodoInput) -> AppResult<Vec<Todo>> {
-        tracing::info!("TodoService::search - query: {}", input.query);
+        tracing::debug!("TodoService::search - query: {}", input.query);
         let mut conn = get_connection(pool)?;
 
         // 转义 LIKE 特殊字符，防止 SQL 注入
@@ -124,10 +132,13 @@ impl TodoService {
         let search_pattern = format!("%{}%", escaped_query);
 
         let todos_list = todos::table
-            .filter(todos::title.like(&search_pattern))
+            .filter(
+                todos::title.like(&search_pattern)
+                    .or(todos::broker.like(&search_pattern))
+            )
             .load::<Todo>(&mut conn)?;
 
-        tracing::info!("Search returned {} results", todos_list.len());
+        tracing::debug!("Search returned {} results", todos_list.len());
         Ok(todos_list)
     }
 }

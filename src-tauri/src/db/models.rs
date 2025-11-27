@@ -13,6 +13,7 @@ pub struct Todo {
     pub broker: String,
     pub created_at: String,
     pub updated_at: String,
+    pub conclusion: Option<String>,
 }
 
 #[derive(Debug, Insertable, Serialize, Deserialize)]
@@ -23,6 +24,7 @@ pub struct NewTodo {
     pub broker: String,
     pub created_at: String,
     pub updated_at: String,
+    pub conclusion: Option<String>,
 }
 
 #[derive(Debug, AsChangeset, Serialize, Deserialize)]
@@ -32,4 +34,5 @@ pub struct UpdateTodo {
     pub status: Option<String>,
     pub broker: Option<String>,
     pub updated_at: String,
+    pub conclusion: Option<String>,
 }

@@ -14,5 +14,8 @@ pub fn establish_connection(database_url: &str) -> DbPool {
 
 /// 从连接池获取数据库连接
 pub fn get_connection(pool: &DbPool) -> AppResult<r2d2::PooledConnection<ConnectionManager<SqliteConnection>>> {
-    pool.get().map_err(|e| AppError::PoolError(e.to_string()))
+    pool.get().map_err(|e| {
+        tracing::error!("Failed to get database connection from pool: {}", e);
+        AppError::PoolError(format!("Database connection pool error: {}", e))
+    })
 }

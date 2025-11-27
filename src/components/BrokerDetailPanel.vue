@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { NCollapse, NCollapseItem, NSpace, NText, NTag, NDivider } from 'naive-ui';
-import type { Todo, TodoStatus } from '../../types/todo';
+import type { Todo } from '../types/todo';
+import { getStatusIcon, getStatusColor, getStatusLabel } from '../utils/todo';
 
 interface Props {
   brokerStatsDetailed: Record<string, {
@@ -12,28 +13,6 @@ interface Props {
 }
 
 defineProps<Props>();
-
-const getStatusColor = (status: TodoStatus) => {
-  return status === 'pending' ? 'default' : status === 'in_progress' ? 'info' : 'success';
-};
-
-const getStatusIcon = (status: TodoStatus) => {
-  switch (status) {
-    case 'pending': return '⭕';
-    case 'in_progress': return '🔄';
-    case 'completed': return '✅';
-    default: return '⭕';
-  }
-};
-
-const getStatusLabel = (status: TodoStatus) => {
-  switch (status) {
-    case 'pending': return '待办';
-    case 'in_progress': return '进行中';
-    case 'completed': return '已完成';
-    default: return '未知';
-  }
-};
 </script>
 
 <template>
@@ -69,9 +48,17 @@ const getStatusLabel = (status: TodoStatus) => {
             class="task-item-inline"
           >
             <span class="text-base mr-2">{{ getStatusIcon(todo.status) }}</span>
-            <n-text :depth="todo.status === 'completed' ? 3 : 1" class="flex-1">
-              {{ todo.title }}
-            </n-text>
+            <div class="flex-1">
+              <n-text :depth="todo.status === 'completed' ? 3 : 1">
+                {{ todo.title }}
+              </n-text>
+              <!-- 显示结论 -->
+              <div v-if="todo.conclusion" class="mt-1">
+                <n-text depth="3" class="text-sm">
+                  结论: {{ todo.conclusion }}
+                </n-text>
+              </div>
+            </div>
             <n-tag :type="getStatusColor(todo.status)" size="small" round>
               {{ getStatusLabel(todo.status) }}
             </n-tag>

@@ -4,7 +4,7 @@ import { formatDate, formatDateRange } from '../utils/dateUtils';
 import { logger } from '../utils/logger';
 
 export function useReportExport(
-  reportTitle: Ref<string>,
+  _reportTitle: Ref<string>,
   reportTimeRange: Ref<'daily' | 'weekly' | 'custom'>,
   reportTodos: Ref<Todo[]>,
   reportBrokerStats: Ref<Record<string, Todo[]>>,

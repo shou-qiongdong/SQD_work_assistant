@@ -2,28 +2,11 @@
 import { ref, computed } from 'vue';
 import {
   NCard, NSpace, NText, NTag, NButton, NButtonGroup,
-  NDatePicker, NDivider, useMessage
+  NDatePicker, NDivider
 } from 'naive-ui';
-import { use } from 'echarts/core';
-import { CanvasRenderer } from 'echarts/renderers';
-import { PieChart } from 'echarts/charts';
-import {
-  TitleComponent,
-  TooltipComponent,
-  LegendComponent,
-} from 'echarts/components';
 import VChart from 'vue-echarts';
 import type { EChartsOption } from 'echarts';
-import type { Todo } from '../../types/todo';
-
-// 注册 ECharts 组件
-use([
-  CanvasRenderer,
-  PieChart,
-  TitleComponent,
-  TooltipComponent,
-  LegendComponent,
-]);
+import type { Todo } from '../types/todo';
 
 interface Props {
   reportTimeRange: 'daily' | 'weekly' | 'custom';
@@ -42,7 +25,6 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
-const message = useMessage();
 const showReportCustomPicker = ref(false);
 const reportCustomRange = ref<[number, number] | null>(null);
 
@@ -103,7 +85,7 @@ const reportBrokerPieOption = computed<EChartsOption>(() => ({
 </script>
 
 <template>
-  <n-card title="📋 日报/周报">
+  <n-card title="日报/周报">
     <n-space class="mb-4" vertical :size="12">
       <n-space :size="12">
         <n-button-group>
@@ -111,13 +93,13 @@ const reportBrokerPieOption = computed<EChartsOption>(() => ({
             :type="reportTimeRange === 'daily' ? 'primary' : 'default'"
             @click="handleReportRangeChange('daily')"
           >
-            📅 日报（今日）
+            日报（今日）
           </n-button>
           <n-button
             :type="reportTimeRange === 'weekly' ? 'primary' : 'default'"
             @click="handleReportRangeChange('weekly')"
           >
-            📆 周报（近7天）
+            周报（近7天）
           </n-button>
           <n-button @click="showReportCustomPicker = !showReportCustomPicker">
             {{ showReportCustomPicker ? '▲ 收起' : '▼ 更多...' }}
@@ -172,7 +154,15 @@ const reportBrokerPieOption = computed<EChartsOption>(() => ({
             class="report-task-item"
           >
             <n-text depth="2" class="text-sm">{{ index + 1 }}.</n-text>
-            <n-text class="ml-2">✅ {{ todo.title }}</n-text>
+            <div class="ml-2 flex-1">
+              <n-text>✅ {{ todo.title }}</n-text>
+              <!-- 显示结论 -->
+              <div v-if="todo.conclusion" class="mt-1">
+                <n-text depth="3" class="text-sm">
+                  结论: {{ todo.conclusion }}
+                </n-text>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -189,13 +179,13 @@ const reportBrokerPieOption = computed<EChartsOption>(() => ({
         @click="handleExportMarkdown"
         :disabled="reportTodos.length === 0"
       >
-        📄 导出 Markdown
+        导出 Markdown
       </n-button>
       <n-button
         @click="handleExportText"
         :disabled="reportTodos.length === 0"
       >
-        📝 导出纯文本
+        导出纯文本
       </n-button>
     </n-space>
   </n-card>

@@ -1,7 +1,7 @@
 import { computed, type Ref } from 'vue';
 import type { Todo } from '../types/todo';
 import { useTodoStore } from '../store/todo';
-import { isInDateRange, formatDate, getDatesBetween } from '../utils/dateUtils';
+import { formatDate, getDatesBetween } from '../utils/dateUtils';
 
 export function useStatsData(
   filteredTodos: Ref<Todo[]>,

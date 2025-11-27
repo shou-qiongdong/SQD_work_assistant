@@ -4,6 +4,7 @@ import App from "./App.vue";
 import "virtual:uno.css";
 import "@unocss/reset/tailwind.css";
 import "./styles/global.css";
+import "./utils/echarts";  // 初始化 ECharts 组件
 
 const app = createApp(App);
 const pinia = createPinia();

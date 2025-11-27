@@ -12,8 +12,9 @@ pub fn create_todo(
     title: String,
     status: String,
     broker: String,
+    conclusion: Option<String>,
 ) -> AppResult<Todo> {
-    let input = CreateTodoInput { title, status, broker };
+    let input = CreateTodoInput { title, status, broker, conclusion };
     TodoService::create(&state.pool, input)
 }
 
