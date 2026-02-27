@@ -29,16 +29,18 @@
 
 ## 数据模型（SQLite）
 表：`todos`
-- `id` (INTEGER, PK)
+- `id` (TEXT, UUID PK)
 - `title` (TEXT)
 - `status` (TEXT: pending / in_progress / completed)
 - `broker` (TEXT)
-- `created_at` (TEXT, YYYY-MM-DD HH:mm:ss)
-- `updated_at` (TEXT, YYYY-MM-DD HH:mm:ss)
+- `created_at` (TEXT, ISO 8601 UTC)
+- `updated_at` (TEXT, ISO 8601 UTC)
 - `conclusion` (TEXT, NULLABLE)
+- `deleted_at` (TEXT, NULLABLE)
 
 ## Tauri 命令
 - `create_todo` / `get_todos` / `update_todo` / `delete_todo` / `search_todos`
+- `get_todos_updated_after` / `upsert_todos`（同步用）
 - `get_broker_pool`
 - `log_from_frontend`
 

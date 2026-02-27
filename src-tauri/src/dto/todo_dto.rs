@@ -29,7 +29,7 @@ pub struct CreateTodoInput {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateTodoInput {
-    pub todo_id: i32,
+    pub todo_id: String,
     pub title: Option<String>,
     #[serde(default, deserialize_with = "validate_optional_status")]
     pub status: Option<String>,
@@ -59,7 +59,7 @@ where
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DeleteTodoInput {
-    pub todo_id: i32,
+    pub todo_id: String,
 }
 
 /// 搜索 Todo 的输入 DTO

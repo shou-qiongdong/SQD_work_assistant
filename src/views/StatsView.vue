@@ -78,9 +78,10 @@ const dateRangeRef = computed(() => getGlobalDateRange());
 
 const filteredTodos = computed(() => {
   const range = getGlobalDateRange();
-  if (!range) return todoStore.todos;
+  const visibleTodos = todoStore.todos.filter(todo => !todo.deleted_at);
+  if (!range) return visibleTodos;
   const [start, end] = range;
-  return todoStore.todos.filter(todo => isInDateRange(todo.created_at, start, end));
+  return visibleTodos.filter(todo => isInDateRange(todo.created_at, start, end));
 });
 
 // 使用 useStatsData composable
@@ -93,6 +94,7 @@ const { statusStats, brokerStatsDetailed, brokerStats, timeTrendData } = useStat
 const reportTodos = computed(() => {
   const [start, end] = getReportDateRange();
   return todoStore.todos.filter(todo => {
+    if (todo.deleted_at) return false;
     if (todo.status !== 'completed') return false;
     return isInDateRange(todo.updated_at, start, end);
   });
@@ -147,6 +149,7 @@ onMounted(async () => {
   logger.info('Component mounted', { context: 'StatsView' });
   await todoStore.fetchTodos();
   await brokerStore.fetchBrokerPool();
+  todoStore.startSync();
   logger.info('Data loaded', {
     context: 'StatsView',
     data: {
@@ -158,8 +161,8 @@ onMounted(async () => {
 
 let unlistenTodoUpdated: (() => void) | null = null;
 onMounted(async () => {
-  unlistenTodoUpdated = await listen('todo-updated', () => {
-    logger.info('Todo updated event received', { context: 'StatsView' });
+  unlistenTodoUpdated = await listen('refresh-todos', () => {
+    logger.info('Todo refresh event received', { context: 'StatsView' });
     todoStore.fetchTodos();
   });
 });
@@ -169,6 +172,7 @@ onUnmounted(() => {
     unlistenTodoUpdated();
     logger.info('Event listener cleaned up', { context: 'StatsView' });
   }
+  todoStore.stopSync();
 });
 </script>
 

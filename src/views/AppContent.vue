@@ -21,6 +21,7 @@ import { useTodoStore } from '../store/todo';
 import { useBrokerStore } from '../store/broker';
 import { logger } from '../utils/logger';
 import { getStatusIcon, getStatusColor, getStatusLabel } from '../utils/todo';
+import { parseDateString } from '../utils/dateUtils';
 
 logger.info('AppContent starting...', { context: 'AppContent' });
 
@@ -30,7 +31,7 @@ const todoStore = useTodoStore();
 const brokerStore = useBrokerStore();
 
 const showModal = ref(false);
-const editingId = ref<number | null>(null);
+const editingId = ref<string | null>(null);
 
 // 结论对话框相关
 const showConclusionDialog = ref(false);
@@ -98,6 +99,10 @@ const handleBrokerChange = (values: string[]) => {
 
 const filteredTodos = computed(() => {
   return todoStore.todos.filter((todo) => {
+    if (todo.deleted_at) {
+      return false;
+    }
+
     // 状态筛选
     let statusMatch = false;
     if (filterStatus.value === 'all') {
@@ -116,7 +121,7 @@ const filteredTodos = computed(() => {
     let createdDateMatch = true;
     if (filterCreatedDateRange.value) {
       const [start, end] = filterCreatedDateRange.value;
-      const createdTime = new Date(todo.created_at).getTime();
+      const createdTime = parseDateString(todo.created_at).getTime();
       createdDateMatch = createdTime >= start && createdTime <= end;
     }
 
@@ -124,7 +129,7 @@ const filteredTodos = computed(() => {
     let updatedDateMatch = true;
     if (filterUpdatedDateRange.value) {
       const [start, end] = filterUpdatedDateRange.value;
-      const updatedTime = new Date(todo.updated_at).getTime();
+      const updatedTime = parseDateString(todo.updated_at).getTime();
       updatedDateMatch = updatedTime >= start && updatedTime <= end;
     }
 
@@ -165,6 +170,11 @@ const handleSave = async () => {
     return;
   }
 
+  if (formData.value.status === 'completed' && !formData.value.conclusion.trim()) {
+    message.error('完成状态必须填写结论');
+    return;
+  }
+
   try {
     if (editingId.value) {
       await todoStore.updateTodo(editingId.value, formData.value);
@@ -185,7 +195,7 @@ const handleSave = async () => {
   }
 };
 
-const handleDelete = async (id: number) => {
+const handleDelete = async (id: string) => {
   dialog.warning({
     title: '确认删除',
     content: '确定要删除这个任务吗？此操作无法撤销。',
@@ -282,6 +292,7 @@ onMounted(async () => {
   await brokerStore.fetchBrokerPool();
   brokerStore.loadLastUsedBroker();
   await todoStore.fetchTodos();
+  todoStore.startSync();
 
   // 监听刷新事件
   unlistenRefresh = await listen('refresh-todos', async () => {
@@ -296,6 +307,7 @@ onUnmounted(() => {
   if (unlistenRefresh) {
     unlistenRefresh();
   }
+  todoStore.stopSync();
 });
 </script>
 

@@ -30,6 +30,9 @@ export class ErrorHandler {
     if (errorMsg.includes('结论长度')) {
       return errorMsg;
     }
+    if (errorMsg.includes('必须填写结论')) {
+      return errorMsg;
+    }
 
     // 返回默认错误消息
     return `${defaultMessage}: ${errorMsg}`;

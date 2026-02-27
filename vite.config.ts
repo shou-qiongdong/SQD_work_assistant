@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
 import UnoCSS from 'unocss/vite';
 import { resolve } from 'path';
@@ -7,17 +7,28 @@ import { resolve } from 'path';
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
-export default defineConfig(async () => ({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const base = env.VITE_BASE_PATH || '/';
+
+  const buildTarget = env.VITE_BUILD_TARGET || 'tauri';
+  const inputs: Record<string, string> = {
+    main: resolve(__dirname, 'index.html'),
+    stats: resolve(__dirname, 'stats.html'),
+  };
+
+  if (buildTarget !== 'web') {
+    inputs.quickAdd = resolve(__dirname, 'quick-add.html');
+  }
+
+  return {
   plugins: [vue(), UnoCSS()],
+  base,
 
   // 多页面应用配置
   build: {
     rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html'),
-        quickAdd: resolve(__dirname, 'quick-add.html'),
-        stats: resolve(__dirname, 'stats.html'),
-      },
+      input: inputs,
     },
   },
 
@@ -42,4 +53,5 @@ export default defineConfig(async () => ({
       ignored: ["**/src-tauri/**"],
     },
   },
-}));
+  };
+});

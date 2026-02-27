@@ -4,6 +4,7 @@ use crate::dto::{CreateTodoInput, UpdateTodoInput, DeleteTodoInput, SearchTodoIn
 use crate::services::TodoService;
 use crate::utils::AppResult;
 use tauri::State;
+use crate::db::Todo;
 
 /// 创建 Todo 命令
 #[tauri::command]
@@ -47,4 +48,22 @@ pub fn delete_todo(
 pub fn search_todos(state: State<AppState>, query: String) -> AppResult<Vec<Todo>> {
     let input = SearchTodoInput { query };
     TodoService::search(&state.pool, input)
+}
+
+/// 获取增量变更（包含已删除）
+#[tauri::command]
+pub fn get_todos_updated_after(
+    state: State<AppState>,
+    updated_after: Option<String>,
+) -> AppResult<Vec<Todo>> {
+    TodoService::get_updated_after(&state.pool, updated_after)
+}
+
+/// 批量 upsert（用于同步）
+#[tauri::command]
+pub fn upsert_todos(
+    state: State<AppState>,
+    todos: Vec<Todo>,
+) -> AppResult<()> {
+    TodoService::upsert_batch(&state.pool, todos)
 }

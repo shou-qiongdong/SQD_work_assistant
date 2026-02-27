@@ -7,24 +7,27 @@ use super::schema::todos;
 #[diesel(table_name = todos)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Todo {
-    pub id: i32,
+    pub id: String,
     pub title: String,
     pub status: String,
     pub broker: String,
     pub created_at: String,
     pub updated_at: String,
     pub conclusion: Option<String>,
+    pub deleted_at: Option<String>,
 }
 
 #[derive(Debug, Insertable, Serialize, Deserialize)]
 #[diesel(table_name = todos)]
 pub struct NewTodo {
+    pub id: String,
     pub title: String,
     pub status: String,
     pub broker: String,
     pub created_at: String,
     pub updated_at: String,
     pub conclusion: Option<String>,
+    pub deleted_at: Option<String>,
 }
 
 #[derive(Debug, AsChangeset, Serialize, Deserialize)]
@@ -35,4 +38,5 @@ pub struct UpdateTodo {
     pub broker: Option<String>,
     pub updated_at: String,
     pub conclusion: Option<String>,
+    pub deleted_at: Option<String>,
 }

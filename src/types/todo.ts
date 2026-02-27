@@ -1,11 +1,12 @@
 export interface Todo {
-  id: number;
+  id: string;
   title: string;
   status: TodoStatus;
   broker: string;
   created_at: string;
   updated_at: string;
   conclusion: string | null;
+  deleted_at?: string | null;
 }
 
 export type TodoStatus = "pending" | "in_progress" | "completed";

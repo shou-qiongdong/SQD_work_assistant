@@ -13,6 +13,7 @@ impl BrokerService {
 
         let brokers = todos::table
             .select(todos::broker)
+            .filter(todos::deleted_at.is_null())
             .distinct()
             .load::<String>(&mut conn)?;
 

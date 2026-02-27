@@ -136,6 +136,8 @@ pub fn run() {
             handlers::update_todo,
             handlers::delete_todo,
             handlers::search_todos,
+            handlers::get_todos_updated_after,
+            handlers::upsert_todos,
             handlers::get_broker_pool,
             utils::logger::log_from_frontend,
         ])

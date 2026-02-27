@@ -1,7 +1,7 @@
 import { computed, type Ref } from 'vue';
 import type { Todo } from '../types/todo';
 import { useTodoStore } from '../store/todo';
-import { formatDate, getDatesBetween } from '../utils/dateUtils';
+import { formatDate, getDatesBetween, parseDateString } from '../utils/dateUtils';
 
 export function useStatsData(
   filteredTodos: Ref<Todo[]>,
@@ -81,13 +81,13 @@ export function useStatsData(
       dateLabels.push(dateStr);
 
       const created = todoStore.todos.filter(todo => {
-        const todoDate = formatDate(new Date(todo.created_at));
+        const todoDate = formatDate(parseDateString(todo.created_at));
         return todoDate === dateStr;
       }).length;
 
       const completed = todoStore.todos.filter(todo => {
         if (todo.status !== 'completed') return false;
-        const todoDate = formatDate(new Date(todo.updated_at));
+        const todoDate = formatDate(parseDateString(todo.updated_at));
         return todoDate === dateStr;
       }).length;
 

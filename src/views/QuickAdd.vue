@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
 import { NInput, NSelect, useMessage } from 'naive-ui';
-import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
 import { emit } from '@tauri-apps/api/event';
-import type { TodoStatus } from '../types/todo';
 import { logger } from '../utils/logger';
 import { useBrokerStore } from '../store/broker';
+import { todoApi } from '../api/todo';
 
 
 const message = useMessage();
@@ -93,9 +92,9 @@ const handleSubmit = async () => {
   logger.info('Quick add task submit', { context: 'QuickAdd', data: { title: title.value, broker: broker.value } });
 
   try {
-    await invoke('create_todo', {
+    await todoApi.create({
       title: title.value.trim(),
-      status: 'pending' as TodoStatus,
+      status: 'pending',
       broker: broker.value.trim(),
     });
 

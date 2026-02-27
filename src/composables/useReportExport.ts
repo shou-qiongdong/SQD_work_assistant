@@ -27,7 +27,9 @@ export function useReportExport(
       .sort((a, b) => b[1].length - a[1].length);
 
     sortedBrokers.forEach(([broker, todos]) => {
-      const percentage = ((todos.length / reportTodos.value.length) * 100).toFixed(1);
+      const percentage = reportTodos.value.length === 0
+        ? '0.0'
+        : ((todos.length / reportTodos.value.length) * 100).toFixed(1);
       md += `### ${broker}\n\n`;
       md += `- 完成任务数：**${todos.length}** 个\n`;
       md += `- 工作量占比：**${percentage}%**\n\n**任务列表：**\n\n`;
@@ -56,7 +58,9 @@ export function useReportExport(
       .sort((a, b) => b[1].length - a[1].length);
 
     sortedBrokers.forEach(([broker, todos]) => {
-      const percentage = ((todos.length / reportTodos.value.length) * 100).toFixed(1);
+      const percentage = reportTodos.value.length === 0
+        ? '0.0'
+        : ((todos.length / reportTodos.value.length) * 100).toFixed(1);
       text += `【${broker}】\n`;
       text += `  完成任务数: ${todos.length} 个\n`;
       text += `  工作量占比: ${percentage}%\n  任务列表:\n`;

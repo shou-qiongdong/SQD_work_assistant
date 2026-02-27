@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
-import { invoke } from '@tauri-apps/api/core';
 import { logger } from '../utils/logger';
+import { brokerApi } from '../api/broker';
 
 interface BrokerState {
   brokers: string[];
@@ -23,7 +23,7 @@ export const useBrokerStore = defineStore('broker', {
       this.loading = true;
       this.error = null;
       try {
-        this.brokers = await invoke<string[]>('get_broker_pool');
+        this.brokers = await brokerApi.getPool();
         logger.info(`Broker pool fetched successfully`, {
           context: 'BrokerStore',
           data: { count: this.brokers.length }

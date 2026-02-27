@@ -68,8 +68,31 @@ export function getLast7Days(): [Date, Date] {
  * @returns 是否在范围内
  */
 export function isInDateRange(dateStr: string, start: Date, end: Date): boolean {
-  const date = new Date(dateStr);
+  const date = parseDateString(dateStr);
   return date >= start && date <= end;
+}
+
+/**
+ * 解析日期字符串（兼容旧格式）
+ * @param dateStr 日期字符串
+ * @returns Date 对象
+ */
+export function parseDateString(dateStr: string): Date {
+  if (!dateStr) {
+    return new Date(NaN);
+  }
+
+  if (dateStr.includes('T')) {
+    return new Date(dateStr);
+  }
+
+  const normalized = `${dateStr.replace(' ', 'T')}Z`;
+  const parsed = new Date(normalized);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed;
+  }
+
+  return new Date(dateStr);
 }
 
 /**

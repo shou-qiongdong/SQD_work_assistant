@@ -3,24 +3,36 @@ import type { Todo, CreateTodoInput, UpdateTodoInput } from '../types/todo';
 import { logger } from '../utils/logger';
 import { todoApi } from '../api/todo';
 import { ErrorHandler } from '../utils/error-handler';
+import { isTauri } from '../api/client';
 
 interface TodoState {
   todos: Todo[];
   loading: boolean;
   error: string | null;
+  syncing: boolean;
+  syncError: string | null;
 }
+
+const SYNC_INTERVAL_MS = 60_000;
+const LAST_SYNC_KEY = 'sqd_last_sync';
+let syncTimer: number | null = null;
+
+const getLastSync = () => localStorage.getItem(LAST_SYNC_KEY);
+const setLastSync = (value: string) => localStorage.setItem(LAST_SYNC_KEY, value);
 
 export const useTodoStore = defineStore('todo', {
   state: (): TodoState => ({
     todos: [],
     loading: false,
     error: null,
+    syncing: false,
+    syncError: null,
   }),
 
   getters: {
-    pendingTodos: (state) => state.todos.filter((t) => t.status === 'pending'),
-    inProgressTodos: (state) => state.todos.filter((t) => t.status === 'in_progress'),
-    completedTodos: (state) => state.todos.filter((t) => t.status === 'completed'),
+    pendingTodos: (state) => state.todos.filter((t) => !t.deleted_at && t.status === 'pending'),
+    inProgressTodos: (state) => state.todos.filter((t) => !t.deleted_at && t.status === 'in_progress'),
+    completedTodos: (state) => state.todos.filter((t) => !t.deleted_at && t.status === 'completed'),
   },
 
   actions: {
@@ -46,6 +58,7 @@ export const useTodoStore = defineStore('todo', {
         const todo = await todoApi.create(input);
         this.todos.push(todo);
         logger.info('Todo created successfully', { context: 'TodoStore', data: { id: todo.id } });
+        await this.syncNow();
         return todo;
       } catch (error) {
         this.error = ErrorHandler.handle(error, 'TodoStore', '创建任务失败');
@@ -55,7 +68,7 @@ export const useTodoStore = defineStore('todo', {
       }
     },
 
-    async updateTodo(id: number, input: UpdateTodoInput) {
+    async updateTodo(id: string, input: UpdateTodoInput) {
       logger.info(`Updating todo ${id}...`, { context: 'TodoStore', data: input });
       this.loading = true;
       this.error = null;
@@ -64,6 +77,7 @@ export const useTodoStore = defineStore('todo', {
         // 使用 map 优化数组更新
         this.todos = this.todos.map(t => t.id === id ? updatedTodo : t);
         logger.info(`Todo ${id} updated successfully`, { context: 'TodoStore' });
+        await this.syncNow();
         return updatedTodo;
       } catch (error) {
         this.error = ErrorHandler.handle(error, 'TodoStore', '更新任务失败');
@@ -73,7 +87,7 @@ export const useTodoStore = defineStore('todo', {
       }
     },
 
-    async deleteTodo(id: number) {
+    async deleteTodo(id: string) {
       logger.info(`Deleting todo ${id}...`, { context: 'TodoStore' });
       this.loading = true;
       this.error = null;
@@ -81,6 +95,7 @@ export const useTodoStore = defineStore('todo', {
         await todoApi.delete(id);
         this.todos = this.todos.filter((t) => t.id !== id);
         logger.info(`Todo ${id} deleted successfully`, { context: 'TodoStore' });
+        await this.syncNow();
       } catch (error) {
         this.error = ErrorHandler.handle(error, 'TodoStore', '删除任务失败');
         throw error;
@@ -102,5 +117,54 @@ export const useTodoStore = defineStore('todo', {
         this.loading = false;
       }
     },
+
+    async syncNow() {
+      if (!isTauri() || this.syncing) {
+        return;
+      }
+
+      this.syncing = true;
+      this.syncError = null;
+
+      try {
+        const lastSync = getLastSync();
+        const localChanges = await todoApi.getLocalChanges(lastSync);
+        const response = await todoApi.syncWithServer({
+          last_sync: lastSync,
+          changes: localChanges
+        });
+
+        if (response.changes.length > 0) {
+          await todoApi.applyRemoteChanges(response.changes);
+        }
+
+        setLastSync(response.server_time);
+        await this.fetchTodos();
+        logger.info('Sync completed', { context: 'TodoStore', data: { changes: response.changes.length } });
+      } catch (error) {
+        this.syncError = ErrorHandler.handle(error, 'TodoStore', '同步失败');
+        logger.warn('Sync failed', { context: 'TodoStore', data: error });
+      } finally {
+        this.syncing = false;
+      }
+    },
+
+    startSync() {
+      if (!isTauri() || syncTimer) {
+        return;
+      }
+
+      this.syncNow();
+      syncTimer = window.setInterval(() => {
+        this.syncNow();
+      }, SYNC_INTERVAL_MS);
+    },
+
+    stopSync() {
+      if (syncTimer) {
+        window.clearInterval(syncTimer);
+        syncTimer = null;
+      }
+    }
   },
 });
