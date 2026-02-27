@@ -10,6 +10,9 @@ pub enum AppError {
 
     #[error("Validation error: {0}")]
     Validation(String),
+
+    #[error("Config error: {0}")]
+    Config(String),
 }
 
 impl serde::Serialize for AppError {

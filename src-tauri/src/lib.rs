@@ -139,6 +139,8 @@ pub fn run() {
             handlers::get_todos_updated_after,
             handlers::upsert_todos,
             handlers::get_broker_pool,
+            handlers::get_api_base,
+            handlers::set_api_base,
             utils::logger::log_from_frontend,
         ])
         .build(tauri::generate_context!())

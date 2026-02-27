@@ -4,7 +4,6 @@ use crate::dto::{CreateTodoInput, UpdateTodoInput, DeleteTodoInput, SearchTodoIn
 use crate::services::TodoService;
 use crate::utils::AppResult;
 use tauri::State;
-use crate::db::Todo;
 
 /// 创建 Todo 命令
 #[tauri::command]

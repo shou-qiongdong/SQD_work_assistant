@@ -3,7 +3,7 @@ use crate::dto::{CreateTodoInput, UpdateTodoInput, DeleteTodoInput, SearchTodoIn
 use crate::utils::{AppError, AppResult, TodoInput, escape_like_pattern};
 use chrono::{Utc, SecondsFormat};
 use diesel::prelude::*;
-use diesel::dsl::excluded;
+use diesel::upsert::excluded;
 use uuid::Uuid;
 
 /// Todo 业务逻辑服务
@@ -117,7 +117,8 @@ impl TodoService {
             deleted_at: None,
         };
 
-        diesel::update(todos::table.find(input.todo_id))
+        let todo_id = input.todo_id.clone();
+        diesel::update(todos::table.find(todo_id))
             .set(&update_todo)
             .execute(&mut conn)?;
 
@@ -146,7 +147,8 @@ impl TodoService {
             deleted_at: Some(now),
         };
 
-        diesel::update(todos::table.find(input.todo_id))
+        let todo_id = input.todo_id.clone();
+        diesel::update(todos::table.find(todo_id))
             .set(&update_todo)
             .execute(&mut conn)?;
 
@@ -195,31 +197,33 @@ impl TodoService {
         }
 
         let mut conn = get_connection(pool)?;
-        let values: Vec<NewTodo> = items.into_iter().map(|todo| NewTodo {
-            id: todo.id,
-            title: todo.title,
-            status: todo.status,
-            broker: todo.broker,
-            created_at: todo.created_at,
-            updated_at: todo.updated_at,
-            conclusion: todo.conclusion,
-            deleted_at: todo.deleted_at,
-        }).collect();
+        for todo in items {
+            let value = NewTodo {
+                id: todo.id,
+                title: todo.title,
+                status: todo.status,
+                broker: todo.broker,
+                created_at: todo.created_at,
+                updated_at: todo.updated_at,
+                conclusion: todo.conclusion,
+                deleted_at: todo.deleted_at,
+            };
 
-        diesel::insert_into(todos::table)
-            .values(&values)
-            .on_conflict(todos::id)
-            .do_update()
-            .set((
-                todos::title.eq(excluded(todos::title)),
-                todos::status.eq(excluded(todos::status)),
-                todos::broker.eq(excluded(todos::broker)),
-                todos::created_at.eq(excluded(todos::created_at)),
-                todos::updated_at.eq(excluded(todos::updated_at)),
-                todos::conclusion.eq(excluded(todos::conclusion)),
-                todos::deleted_at.eq(excluded(todos::deleted_at)),
-            ))
-            .execute(&mut conn)?;
+            diesel::insert_into(todos::table)
+                .values(&value)
+                .on_conflict(todos::id)
+                .do_update()
+                .set((
+                    todos::title.eq(excluded(todos::title)),
+                    todos::status.eq(excluded(todos::status)),
+                    todos::broker.eq(excluded(todos::broker)),
+                    todos::created_at.eq(excluded(todos::created_at)),
+                    todos::updated_at.eq(excluded(todos::updated_at)),
+                    todos::conclusion.eq(excluded(todos::conclusion)),
+                    todos::deleted_at.eq(excluded(todos::deleted_at)),
+                ))
+                .execute(&mut conn)?;
+        }
 
         Ok(())
     }
