@@ -7,7 +7,7 @@ const isTauriRuntime = isBrowser && Boolean(
   || (window as typeof window & { __TAURI_METADATA__?: unknown }).__TAURI_METADATA__
   || (window.location?.protocol === 'tauri:' || window.location?.protocol === 'tauri')
 );
-const fallbackBase = isTauriRuntime ? 'http://47.108.156.226:1980/assistant/api' : '/assistant/api';
+const fallbackBase = isTauriRuntime ? 'https://47.108.156.226:1980/assistant/api' : '/assistant/api';
 const API_BASE = import.meta.env.VITE_API_BASE_URL || fallbackBase;
 
 export const isTauri = () => isTauriRuntime;
