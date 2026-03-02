@@ -14,6 +14,7 @@ use tauri::Manager;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::TrayIconBuilder;
 use tauri_plugin_global_shortcut::GlobalShortcutExt;
+use tauri_plugin_opener::OpenerExt;
 use window::{create_or_show_quick_add_window, create_or_show_stats_window};
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
@@ -78,6 +79,7 @@ pub fn run() {
             let show_item = MenuItem::with_id(app, "show", "显示主窗口", true, None::<&str>)?;
             let stats_item = MenuItem::with_id(app, "stats", "数据统计", true, None::<&str>)?;
             let quick_add_item = MenuItem::with_id(app, "quick_add", "快速添加", true, None::<&str>)?;
+            let open_logs_item = MenuItem::with_id(app, "open_logs", "打开日志文件", true, None::<&str>)?;
             let separator = PredefinedMenuItem::separator(app)?;
             let quit_item = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
 
@@ -85,6 +87,7 @@ pub fn run() {
                 &show_item,
                 &stats_item,
                 &quick_add_item,
+                &open_logs_item,
                 &separator,
                 &quit_item,
             ])?;
@@ -111,6 +114,23 @@ pub fn run() {
                         "quick_add" => {
                             tracing::info!("Tray menu: Quick add");
                             create_or_show_quick_add_window(app);
+                        }
+                        "open_logs" => {
+                            let log_path = app
+                                .path()
+                                .app_data_dir()
+                                .map(|dir| dir.join("logs").join("app.log"));
+                            match log_path {
+                                Ok(path) => {
+                                    tracing::info!("Tray menu: Open log file {:?}", path);
+                                    if let Err(err) = app.opener().open_path(path.to_string_lossy(), None::<&str>) {
+                                        tracing::error!("Failed to open log file: {}", err);
+                                    }
+                                }
+                                Err(err) => {
+                                    tracing::error!("Failed to resolve log path: {}", err);
+                                }
+                            }
                         }
                         "quit" => {
                             tracing::info!("Tray menu: Quit");
