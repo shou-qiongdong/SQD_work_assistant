@@ -4,7 +4,7 @@ use tauri::{AppHandle, Manager};
 
 use crate::utils::{AppError, AppResult};
 
-pub const DEFAULT_API_BASE: &str = "https://47.108.156.226:1980/assistant/api";
+pub const DEFAULT_API_BASE: &str = "https://47.108.156.226:1981/assistant/api";
 const CONFIG_FILE: &str = "assistant_api.json";
 
 #[derive(Debug, Serialize, Deserialize)]
